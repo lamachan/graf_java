@@ -4,4 +4,6 @@ public interface ReadGraph {
     public void readGraph();
 
     public void writeGraph();
+
+    public void printGraph();
 }
