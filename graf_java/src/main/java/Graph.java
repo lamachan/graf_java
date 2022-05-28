@@ -53,29 +53,32 @@ public class Graph implements GeneratedGraph, ReadGraph {
         return weightLower + (weightUpper - weightLower) * r.nextDouble();
     }
 
+    public Vertex getVertex(int index) {
+        return v[index];
+    }
     @Override
     public void generateGraph() {
         double w = 0.0;
         for(int i = 0; i < getGraphSize(); i++) {
-            if((getCurrentRow(i) != 0) && (v[i].hasNeighbour(0))) {
+            if((getCurrentRow(i) != 0) && !(v[i].hasNeighbour(Vertex.UPPER))) {
                 w = getRandomWeight();
-                v[i].setNeighbour(0, i - columns, w);
-                v[i - columns].setNeighbour(3, i, w);
+                v[i].setNeighbour(Vertex.UPPER, i - columns, w);
+                v[i - columns].setNeighbour(Vertex.LOWER, i, w);
             }
-            if((getCurrentColumn(i) != 0) && (v[i].hasNeighbour(1))) {
+            if((getCurrentColumn(i) != 0) && !(v[i].hasNeighbour(Vertex.LEFT))) {
                 w = getRandomWeight();
-                v[i].setNeighbour(1, i - 1, w);
-                v[i - 1].setNeighbour(2, i, w);
+                v[i].setNeighbour(Vertex.LEFT, i - 1, w);
+                v[i - 1].setNeighbour(Vertex.RIGHT, i, w);
             }
-            if((getCurrentColumn(i) != (columns - 1)) && (v[i].hasNeighbour(2))) {
+            if((getCurrentColumn(i) != (columns - 1)) && !(v[i].hasNeighbour(Vertex.RIGHT))) {
                 w = getRandomWeight();
-                v[i].setNeighbour(2, i + 1, w);
-                v[i + 1].setNeighbour(1, i, w);
+                v[i].setNeighbour(Vertex.RIGHT, i + 1, w);
+                v[i + 1].setNeighbour(Vertex.LEFT, i, w);
             }
-            if((getCurrentRow(i) != (rows - 1)) && (v[i].hasNeighbour(3))) {
+            if((getCurrentRow(i) != (rows - 1)) && !(v[i].hasNeighbour(Vertex.LOWER))) {
                 w = getRandomWeight();
-                v[i].setNeighbour(3, i + columns, w);
-                v[i + columns].setNeighbour(0, i, w);
+                v[i].setNeighbour(Vertex.LOWER, i + columns, w);
+                v[i + columns].setNeighbour(Vertex.UPPER, i, w);
             }
         }
     }
@@ -93,5 +96,14 @@ public class Graph implements GeneratedGraph, ReadGraph {
     @Override
     public void writeGraph() {
         // to be implemented
+    }
+
+    @Override
+    public void printGraph() {
+        System.out.println("rows = " + rows + " columns = " + columns);
+        System.out.println("w1 = " + weightLower + " w2 = " + weightUpper);
+        for(int i = 0; i < getGraphSize(); i++) {
+            System.out.println(v[i]);
+        }
     }
 }

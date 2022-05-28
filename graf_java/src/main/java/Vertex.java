@@ -8,12 +8,14 @@ public class Vertex {
     // 2 -> right (i+1) neighbour
     // 3 -> lower (i+column) neighbour
     private double [] weight = new double [4];
+    public final static int UPPER = 0;
+    public final static int LEFT = 1;
+    public final static int RIGHT = 2;
+    public final static int LOWER = 3;
 
     public Vertex(int index) {
         this.index = index;
-        //this.neighbour = new int [4];
         Arrays.fill(neighbour, -1);
-        //this.weight = new double [4];
         Arrays.fill(weight, -1);
     }
 
@@ -37,5 +39,18 @@ public class Vertex {
 
     public double getWeight(int position) {
         return weight[position];
+    }
+
+    @Override
+    public String toString() {
+        String str = new String();
+        str = "v" + index + " : ";
+        for(int i = 0; i < 4; i++) {
+            if(neighbour[i] != -1) {
+                str = str + "(" + neighbour[i] + ", " + weight[i] + ") ";
+            }
+        }
+
+        return str;
     }
 }

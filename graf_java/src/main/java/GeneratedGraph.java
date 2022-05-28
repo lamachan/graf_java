@@ -11,4 +11,6 @@ public interface GeneratedGraph {
 
     public void writeGraph();
 
+    public void printGraph();
+
 }
