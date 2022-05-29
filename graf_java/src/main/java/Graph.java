@@ -1,5 +1,9 @@
 import java.util.Random;
 
+import java.io.FileNotFoundException;
+import java.io.*;
+import java.util.regex.*;
+
 public class Graph implements GeneratedGraph, ReadGraph {
     private final int rows;
     private final int columns;
@@ -90,18 +94,117 @@ public class Graph implements GeneratedGraph, ReadGraph {
 
     @Override
     public void readGraph() {
-        // to be implemented
+        String filename = "graph.txt";
+        FileReader file = null;     //try to read file
+        try {
+            file = new FileReader(filename);
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+        BufferedReader buffer = new BufferedReader(file);
+        String line = null;     //try to read first line
+        try {
+            line = buffer.readLine();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        Pattern pattern= Pattern.compile("\\d+ \\d+");      //finding pattern for rows columns
+        Matcher matcher = pattern.matcher(line);
+        if(matcher.find()) {
+            String[] parts = line.split(" ");
+            int rows = Integer.parseInt(parts[0]);
+            int columns = Integer.parseInt(parts[1]);
+            if(rows*columns > 1000000 || rows*columns <= 0 ) {
+                //error
+            } else {
+                Graph graph = new Graph(rows, columns);
+                int size;
+                int vertex;
+                double weight;
+                Pattern pattern2= Pattern.compile("\\d+");          //pattern for vertex
+                Matcher matcher2;
+                Pattern pattern3= Pattern.compile(":\\d+.\\d+");      //pattern for weight
+                Matcher matcher3;
+                for(int i = 0; i < getGraphSize(); i++){
+                    try {
+                        line = buffer.readLine();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                    while ( line != null){
+                        line = line.replace("\t", "");
+                        line = line.replace("\n", "");
+                        parts = line.split(" ");
+                        for (int j = 0; j < parts.length; j++) {
+                            matcher2 = pattern2.matcher(parts[j]);
+                            vertex = Integer.parseInt(parts[j]);
+                            matcher3 = pattern3.matcher(parts[j++]);
+                            weight = Double.parseDouble(parts[j]);
+                            if (matcher2.find() && matcher3.find()) {   //i - wierzcholek w grafie vertex - wiecholek sasiada
+                                if (add_neighbour (graph, vertex, weight, i)  == -1)
+                                    System.out.print("Error");  //Add errors
+                            }
+                            else
+                                System.out.print("Error");      //Add errors
+
+                        }
+                    }
+                }
+
+            }
+
+        } else
+            System.out.print("Error");      //Add errors
+
+
+    }
+
+
+    //@Override
+    public int add_neighbour (Graph graph, int vertex, double weight, int i) {
+        if (vertex < 0 || vertex >= getGraphSize() || vertex == i || weight <= 0) {
+            return -1;
+        }
+        if (vertex == (i - graph.columns)) {
+            v[i].setNeighbour(Vertex.UPPER, vertex, weight);
+            return 0;
+        }
+        if (vertex == (i - 1)) {
+            v[i].setNeighbour(Vertex.LEFT, vertex, weight);
+            return 0;
+        }
+        if (vertex == (i + 1)) {
+            v[i].setNeighbour(Vertex.RIGHT, vertex, weight);
+            return 0;
+        }
+        if (vertex == (i + graph.columns)) {
+            v[i].setNeighbour(Vertex.LOWER, vertex, weight);
+            return 0;
+        }
+        return -1;
     }
 
     @Override
     public void writeGraph() {
-        // to be implemented
+        String file = "file.txt";
+        PrintWriter writer = null;
+        try {
+            writer = new PrintWriter(file, "UTF-8");
+        } catch (FileNotFoundException | UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
+        writer.println(rows + " " + columns);
+        for(int i = 0; i < getGraphSize(); i++) {
+            writer.println("\t" + v[i]);
+        }
+
+        writer.close();
     }
 
     @Override
     public void printGraph() {
         System.out.println("rows = " + rows + " columns = " + columns);
-        System.out.println("w1 = " + weightLower + " w2 = " + weightUpper);
+        //System.out.println("w1 = " + weightLower + " w2 = " + weightUpper);
         for(int i = 0; i < getGraphSize(); i++) {
             System.out.println(v[i]);
         }

@@ -44,10 +44,11 @@ public class Vertex {
     @Override
     public String toString() {
         String str = new String();
-        str = "v" + index + " : ";
+        //str = "v" + index + " : ";
         for(int i = 0; i < 4; i++) {
             if(neighbour[i] != -1) {
-                str = str + "(" + neighbour[i] + ", " + weight[i] + ") ";
+                //str = str + "(" + neighbour[i] + ", " + weight[i] + ") ";
+                str = str + neighbour[i] + " :" + weight[i] + " ";
             }
         }
 
