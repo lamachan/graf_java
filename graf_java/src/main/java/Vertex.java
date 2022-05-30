@@ -1,13 +1,14 @@
 import java.util.Arrays;
 
 public class Vertex {
+    // maybe get rid of the index here
     private final int index;
-    private int [] neighbour = new int [4];
     // 0 -> upper (i-column) neighbour
     // 1 -> left (i-1) neighbour
     // 2 -> right (i+1) neighbour
     // 3 -> lower (i+column) neighbour
-    private double [] weight = new double [4];
+    private final int [] neighbour = new int [4];
+    private final double [] weight = new double [4];
     public final static int UPPER = 0;
     public final static int LEFT = 1;
     public final static int RIGHT = 2;
@@ -43,15 +44,12 @@ public class Vertex {
 
     @Override
     public String toString() {
-        String str = new String();
-        //str = "v" + index + " : ";
+        String str = null;
         for(int i = 0; i < 4; i++) {
             if(neighbour[i] != -1) {
-                //str = str + "(" + neighbour[i] + ", " + weight[i] + ") ";
                 str = str + neighbour[i] + " :" + weight[i] + " ";
             }
         }
-
         return str;
     }
 }

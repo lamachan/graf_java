@@ -1,15 +1,12 @@
 import java.util.Random;
-
-import java.io.FileNotFoundException;
 import java.io.*;
-import java.util.regex.*;
 
 public class Graph implements GeneratedGraph, ReadGraph {
-    private final int rows;
-    private final int columns;
+    private int rows;
+    private int columns;
     private Vertex [] v;
-    private final double weightLower;
-    private final double weightUpper;
+    private double weightLower;
+    private double weightUpper;
     private final Random r = new Random();
 
     public Graph(int rows, int columns, int w1, int w2) {
@@ -23,19 +20,11 @@ public class Graph implements GeneratedGraph, ReadGraph {
             v[i] = new Vertex(i);
     }
 
-    // maybe differentiate the generated graph from the read graph with interfaces???
-    public Graph(int rows, int columns) {
-        // read from a file
-        this.rows = rows;
-        this.columns = columns;
-        // not sure what to do with the weight range yet
-        // how to determine it? needed for the rainbow edges
-        // maybe find the min and max weight and round to the closest integer (floor for min, ceiling for max)
-        this.weightLower = -1;
-        this.weightUpper = -1;
-        v = new Vertex[rows * columns];
-        for(int i = 0; i < getGraphSize(); i++)
-            v[i] = new Vertex(i);
+    public Graph() {
+        // creates an empty graph to be read from a file later
+        rows = columns = 0;
+        weightLower = Double.POSITIVE_INFINITY;
+        weightUpper = -1;
     }
 
     @Override
@@ -43,13 +32,11 @@ public class Graph implements GeneratedGraph, ReadGraph {
         return rows * columns;
     }
 
-    @Override
-    public int getCurrentRow(int index) {
+    private int getCurrentRow(int index) {
         return index / columns;
     }
 
-    @Override
-    public int getCurrentColumn(int index) {
+    private int getCurrentColumn(int index) {
         return index % columns;
     }
 
@@ -57,12 +44,28 @@ public class Graph implements GeneratedGraph, ReadGraph {
         return weightLower + (weightUpper - weightLower) * r.nextDouble();
     }
 
+    @Override
     public Vertex getVertex(int index) {
         return v[index];
     }
+
+    private void setWeightRange() {
+        for(Vertex current : v) {
+            for(int j = 0; j < 4; j++) {
+                double w = current.getWeight(j);
+                if(current.hasNeighbour(j) && (w < weightLower)) {
+                    weightLower = current.getWeight(j);
+                }
+                if(w > weightUpper) {
+                    weightUpper = current.getWeight(j);
+                }
+            }
+        }
+    }
+
     @Override
     public void generateGraph() {
-        double w = 0.0;
+        double w;
         for(int i = 0; i < getGraphSize(); i++) {
             if((getCurrentRow(i) != 0) && !(v[i].hasNeighbour(Vertex.UPPER))) {
                 w = getRandomWeight();
@@ -93,120 +96,79 @@ public class Graph implements GeneratedGraph, ReadGraph {
     }
 
     @Override
-    public void readGraph() {
-        String filename = "graph.txt";
-        FileReader file = null;     //try to read file
+    public void readGraph(FileReader reader) throws IOException {
         try {
-            file = new FileReader(filename);
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-        BufferedReader buffer = new BufferedReader(file);
-        String line = null;     //try to read first line
-        try {
-            line = buffer.readLine();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        Pattern pattern= Pattern.compile("\\d+ \\d+");      //finding pattern for rows columns
-        Matcher matcher = pattern.matcher(line);
-        if(matcher.find()) {
-            String[] parts = line.split(" ");
-            int rows = Integer.parseInt(parts[0]);
-            int columns = Integer.parseInt(parts[1]);
-            if(rows*columns > 1000000 || rows*columns <= 0 ) {
-                //error
-            } else {
-                Graph graph = new Graph(rows, columns);
-                int size;
-                int vertex;
-                double weight;
-                Pattern pattern2= Pattern.compile("\\d+");          //pattern for vertex
-                Matcher matcher2;
-                Pattern pattern3= Pattern.compile(":\\d+.\\d+");      //pattern for weight
-                Matcher matcher3;
-                for(int i = 0; i < getGraphSize(); i++){
-                    try {
-                        line = buffer.readLine();
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                    while ( line != null){
-                        line = line.replace("\t", "");
-                        line = line.replace("\n", "");
-                        parts = line.split(" ");
-                        for (int j = 0; j < parts.length; j++) {
-                            matcher2 = pattern2.matcher(parts[j]);
-                            vertex = Integer.parseInt(parts[j]);
-                            matcher3 = pattern3.matcher(parts[j++]);
-                            weight = Double.parseDouble(parts[j]);
-                            if (matcher2.find() && matcher3.find()) {   //i - wierzcholek w grafie vertex - wiecholek sasiada
-                                if (add_neighbour (graph, vertex, weight, i)  == -1)
-                                    System.out.print("Error");  //Add errors
-                            }
-                            else
-                                System.out.print("Error");      //Add errors
+            BufferedReader buffer = new BufferedReader(reader);
+            String[] line = buffer.readLine().trim().split("\\s");
+            rows = Integer.parseInt(line[0]);
+            columns = Integer.parseInt(line[1]);
 
+            if (rows * columns > 1000000 || rows * columns <= 0) {
+                // change to an exception? (arguments out of range or incorrect file format)
+                System.out.println("Error");
+            } else {
+                v = new Vertex[rows * columns];
+                for (int i = 0; i < getGraphSize(); i++)
+                    v[i] = new Vertex(i);
+
+                int neighbour;
+                double weight;
+                for (int i = 0; i < getGraphSize(); i++) {
+                    line = buffer.readLine().trim().split("[\\s:]+");
+                    for (int j = 0; (j + 1) < line.length; j++) {
+                        neighbour = Integer.parseInt(line[j]);
+                        weight = Double.parseDouble(line[++j]);
+                        if (addNeighbour(i, neighbour, weight) == -1) {
+                            // change to an exception? arguments out of range or incorrect file format
+                            System.out.println("Error");
                         }
                     }
+                    setWeightRange();
                 }
-
             }
-
-        } else
-            System.out.print("Error");      //Add errors
-
-
+        } catch(NumberFormatException e) {
+            throw new IOException("Incorrect file format.");
+        }
     }
 
-
-    //@Override
-    public int add_neighbour (Graph graph, int vertex, double weight, int i) {
-        if (vertex < 0 || vertex >= getGraphSize() || vertex == i || weight <= 0) {
+    private int addNeighbour(int vertex, int neighbour, double weight) {
+        if (neighbour < 0 || neighbour >= getGraphSize() || neighbour == vertex || weight <= 0) {
             return -1;
         }
-        if (vertex == (i - graph.columns)) {
-            v[i].setNeighbour(Vertex.UPPER, vertex, weight);
+        if (neighbour == (vertex - columns)) {
+            v[vertex].setNeighbour(Vertex.UPPER, neighbour, weight);
             return 0;
         }
-        if (vertex == (i - 1)) {
-            v[i].setNeighbour(Vertex.LEFT, vertex, weight);
+        if (neighbour == (vertex - 1)) {
+            v[vertex].setNeighbour(Vertex.LEFT, neighbour, weight);
             return 0;
         }
-        if (vertex == (i + 1)) {
-            v[i].setNeighbour(Vertex.RIGHT, vertex, weight);
+        if (neighbour == (vertex + 1)) {
+            v[vertex].setNeighbour(Vertex.RIGHT, neighbour, weight);
             return 0;
         }
-        if (vertex == (i + graph.columns)) {
-            v[i].setNeighbour(Vertex.LOWER, vertex, weight);
+        if (neighbour == (vertex + columns)) {
+            v[vertex].setNeighbour(Vertex.LOWER, neighbour, weight);
             return 0;
         }
         return -1;
     }
 
     @Override
-    public void writeGraph() {
-        String file = "file.txt";
-        PrintWriter writer = null;
-        try {
-            writer = new PrintWriter(file, "UTF-8");
-        } catch (FileNotFoundException | UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
-        }
+    public void writeGraph(PrintWriter writer) {
         writer.println(rows + " " + columns);
-        for(int i = 0; i < getGraphSize(); i++) {
-            writer.println("\t" + v[i]);
+        for(Vertex current : v) {
+            writer.println("\t" + current);
         }
-
         writer.close();
     }
 
     @Override
     public void printGraph() {
         System.out.println("rows = " + rows + " columns = " + columns);
-        //System.out.println("w1 = " + weightLower + " w2 = " + weightUpper);
-        for(int i = 0; i < getGraphSize(); i++) {
-            System.out.println(v[i]);
+        System.out.println("w1 = " + weightLower + " w2 = " + weightUpper);
+        for(Vertex current : v) {
+            System.out.println(current);
         }
     }
 }
