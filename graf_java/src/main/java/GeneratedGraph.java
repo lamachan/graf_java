@@ -1,3 +1,5 @@
+package App;
+
 import java.io.PrintWriter;
 
 public interface GeneratedGraph {
