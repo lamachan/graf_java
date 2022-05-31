@@ -1,16 +1,18 @@
+package App;
+
+import java.io.PrintWriter;
+
 public interface GeneratedGraph {
-    public int getGraphSize();
+    int getGraphSize();
 
-    public int getCurrentRow(int index);
+    Vertex getVertex(int index);
 
-    public int getCurrentColumn(int index);
+    void generateGraph();
 
-    public void generateGraph();
+    void splitGraph();
 
-    public void splitGraph();
+    void writeGraph(PrintWriter writer);
 
-    public void writeGraph();
-
-    public void printGraph();
+    void printGraph();
 
 }

@@ -1,21 +1,21 @@
+package App;
+
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.Queue;
 
 public class Connectivity {
-    private int [] colour;
-    private static int WHITE = 0;
-    private static int GRAY = 1;
-    private static int BLACK = 2;
+    private final int [] colour;
+    private final static int WHITE = 0;
+    private final static int GRAY = 1;
+    private final static int BLACK = 2;
 
     public Connectivity(Graph g) {
         colour = new int [g.getGraphSize()];
         Arrays.fill(colour, WHITE);
     }
 
-    // not sure where to check the connectivity
     private void bfs(Graph g, int startVertex) {
-        //Arrays.fill(colour, WHITE);
         colour[startVertex] = GRAY;
 
         Queue<Integer> q = new LinkedList<>();
@@ -37,8 +37,8 @@ public class Connectivity {
     public boolean isConnected(Graph g) {
         // used to check connectivity
         bfs(g, 0);
-        for(int i = 0; i < g.getGraphSize(); i++) {
-            if(colour[i] != BLACK) {
+        for(int current : colour) {
+            if(current != BLACK) {
                 return false;
             }
         }
@@ -48,9 +48,6 @@ public class Connectivity {
     public boolean isConnected(Graph g, int startVertex, int finishVertex) {
         // used to check if 2 chosen vertices are connected (by splitGraph)
         bfs(g, startVertex);
-        if(colour[finishVertex] != BLACK) {
-            return false;
-        }
-        return true;
+        return (colour[finishVertex] == BLACK);
     }
 }

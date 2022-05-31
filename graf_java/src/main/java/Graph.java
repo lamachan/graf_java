@@ -1,11 +1,14 @@
+package App;
+
 import java.util.Random;
+import java.io.*;
 
 public class Graph implements GeneratedGraph, ReadGraph {
-    private final int rows;
-    private final int columns;
+    private int rows;
+    private int columns;
     private Vertex [] v;
-    private final double weightLower;
-    private final double weightUpper;
+    private double weightLower;
+    private double weightUpper;
     private final Random r = new Random();
 
     public Graph(int rows, int columns, int w1, int w2) {
@@ -19,19 +22,11 @@ public class Graph implements GeneratedGraph, ReadGraph {
             v[i] = new Vertex(i);
     }
 
-    // maybe differentiate the generated graph from the read graph with interfaces???
-    public Graph(int rows, int columns) {
-        // read from a file
-        this.rows = rows;
-        this.columns = columns;
-        // not sure what to do with the weight range yet
-        // how to determine it? needed for the rainbow edges
-        // maybe find the min and max weight and round to the closest integer (floor for min, ceiling for max)
-        this.weightLower = -1;
-        this.weightUpper = -1;
-        v = new Vertex[rows * columns];
-        for(int i = 0; i < getGraphSize(); i++)
-            v[i] = new Vertex(i);
+    public Graph() {
+        // creates an empty graph to be read from a file later
+        rows = columns = 0;
+        weightLower = Double.POSITIVE_INFINITY;
+        weightUpper = -1;
     }
 
     @Override
@@ -39,13 +34,11 @@ public class Graph implements GeneratedGraph, ReadGraph {
         return rows * columns;
     }
 
-    @Override
-    public int getCurrentRow(int index) {
+    private int getCurrentRow(int index) {
         return index / columns;
     }
 
-    @Override
-    public int getCurrentColumn(int index) {
+    private int getCurrentColumn(int index) {
         return index % columns;
     }
 
@@ -53,12 +46,28 @@ public class Graph implements GeneratedGraph, ReadGraph {
         return weightLower + (weightUpper - weightLower) * r.nextDouble();
     }
 
+    @Override
     public Vertex getVertex(int index) {
         return v[index];
     }
+
+    private void setWeightRange() {
+        for(Vertex current : v) {
+            for(int j = 0; j < 4; j++) {
+                double w = current.getWeight(j);
+                if(current.hasNeighbour(j) && (w < weightLower)) {
+                    weightLower = current.getWeight(j);
+                }
+                if(w > weightUpper) {
+                    weightUpper = current.getWeight(j);
+                }
+            }
+        }
+    }
+
     @Override
     public void generateGraph() {
-        double w = 0.0;
+        double w;
         for(int i = 0; i < getGraphSize(); i++) {
             if((getCurrentRow(i) != 0) && !(v[i].hasNeighbour(Vertex.UPPER))) {
                 w = getRandomWeight();
@@ -89,21 +98,79 @@ public class Graph implements GeneratedGraph, ReadGraph {
     }
 
     @Override
-    public void readGraph() {
-        // to be implemented
+    public void readGraph(FileReader reader) throws IOException {
+        try {
+            BufferedReader buffer = new BufferedReader(reader);
+            String[] line = buffer.readLine().trim().split("\\s");
+            rows = Integer.parseInt(line[0]);
+            columns = Integer.parseInt(line[1]);
+
+            if (rows * columns > 1000000 || rows * columns <= 0) {
+                // change to an exception? (arguments out of range or incorrect file format)
+                System.out.println("Error");
+            } else {
+                v = new Vertex[rows * columns];
+                for (int i = 0; i < getGraphSize(); i++)
+                    v[i] = new Vertex(i);
+
+                int neighbour;
+                double weight;
+                for (int i = 0; i < getGraphSize(); i++) {
+                    line = buffer.readLine().trim().split("[\\s:]+");
+                    for (int j = 0; (j + 1) < line.length; j++) {
+                        neighbour = Integer.parseInt(line[j]);
+                        weight = Double.parseDouble(line[++j]);
+                        if (addNeighbour(i, neighbour, weight) == -1) {
+                            // change to an exception? arguments out of range or incorrect file format
+                            System.out.println("Error");
+                        }
+                    }
+                    setWeightRange();
+                }
+            }
+        } catch(NumberFormatException e) {
+            throw new IOException("Incorrect file format.");
+        }
+    }
+
+    private int addNeighbour(int vertex, int neighbour, double weight) {
+        if (neighbour < 0 || neighbour >= getGraphSize() || neighbour == vertex || weight <= 0) {
+            return -1;
+        }
+        if (neighbour == (vertex - columns)) {
+            v[vertex].setNeighbour(Vertex.UPPER, neighbour, weight);
+            return 0;
+        }
+        if (neighbour == (vertex - 1)) {
+            v[vertex].setNeighbour(Vertex.LEFT, neighbour, weight);
+            return 0;
+        }
+        if (neighbour == (vertex + 1)) {
+            v[vertex].setNeighbour(Vertex.RIGHT, neighbour, weight);
+            return 0;
+        }
+        if (neighbour == (vertex + columns)) {
+            v[vertex].setNeighbour(Vertex.LOWER, neighbour, weight);
+            return 0;
+        }
+        return -1;
     }
 
     @Override
-    public void writeGraph() {
-        // to be implemented
+    public void writeGraph(PrintWriter writer) {
+        writer.println(rows + " " + columns);
+        for(Vertex current : v) {
+            writer.println("\t" + current);
+        }
+        writer.close();
     }
 
     @Override
     public void printGraph() {
         System.out.println("rows = " + rows + " columns = " + columns);
         System.out.println("w1 = " + weightLower + " w2 = " + weightUpper);
-        for(int i = 0; i < getGraphSize(); i++) {
-            System.out.println(v[i]);
+        for(Vertex current : v) {
+            System.out.println(current);
         }
     }
 }

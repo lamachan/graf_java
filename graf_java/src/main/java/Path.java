@@ -1,3 +1,6 @@
+package App;
+
+import java.util.ArrayList;
 import java.util.Arrays;
 
 public class Path {
@@ -41,7 +44,7 @@ public class Path {
 
         void heapDown() {
             int parent = 0, tmp;
-            int child = 2 * parent + 1;
+            int child = 1;
 
             while(child < count) {
                 if (((child + 1) < count) && (distance[heap[child + 1]] < distance[heap[child]])) {
@@ -117,7 +120,21 @@ public class Path {
         }
     }
 
-    /*public double [] findPath(Graph g, int startVertex, int finishVertex) {
-        // not sure what to do yet
-    }*/
+    public ArrayList<Integer> findPath(Graph g, int startVertex, int finishVertex) {
+        dijkstry(g, startVertex);
+
+        if(predecessor[finishVertex] == -1) {
+            // path doesn't exist
+            return null;
+        }
+
+        ArrayList<Integer> path = new ArrayList<>();
+        int currentVertex = finishVertex;
+        while(currentVertex != startVertex) {
+            path.add(currentVertex);
+            currentVertex = predecessor[currentVertex];
+        }
+        path.add(currentVertex);
+        return path;
+    }
 }

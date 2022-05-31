@@ -1,9 +1,17 @@
+package App;
+
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.PrintWriter;
+
 public interface ReadGraph {
-    public int getGraphSize();
+    int getGraphSize();
 
-    public void readGraph();
+    Vertex getVertex(int index);
 
-    public void writeGraph();
+    void readGraph(FileReader file) throws IOException;
 
-    public void printGraph();
+    void writeGraph(PrintWriter writer);
+
+    void printGraph();
 }
